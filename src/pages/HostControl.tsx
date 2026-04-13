@@ -1,20 +1,48 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import {
-  ArrowLeft, Play, Radio, UserCheck, UserPlus, BarChart3, Square, CheckCircle, Pause, ExternalLink,
+  ArrowLeft, Play, UserCheck, UserPlus, BarChart3, Square, CheckCircle, Pause, ExternalLink,
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
-import { liveBattles, participants, speakerRequests } from "@/data/mockData";
+import { useBattle } from "@/hooks/useBattles";
+import { supabase } from "@/integrations/supabase/client";
 
 const HostControl = () => {
   const { roomId } = useParams();
   const navigate = useNavigate();
-  const battle = liveBattles.find((b) => b.id === roomId) || liveBattles[0];
+  const { data: battle, isLoading } = useBattle(roomId);
 
   const [isLive, setIsLive] = useState(true);
   const [votingOpen, setVotingOpen] = useState(true);
-  const [round, setRound] = useState(battle.round);
+  const [round, setRound] = useState(1);
   const [ended, setEnded] = useState(false);
+  const [participants, setParticipants] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (battle) setRound(battle.round || 1);
+  }, [battle]);
+
+  // Fetch room participants from battle_rooms
+  useEffect(() => {
+    if (!roomId) return;
+    const fetchParticipants = async () => {
+      const { data } = await supabase
+        .from("battle_rooms")
+        .select("*")
+        .eq("battle_id", roomId)
+        .eq("is_active", true);
+      if (data) setParticipants(data);
+    };
+    fetchParticipants();
+  }, [roomId]);
+
+  if (isLoading || !battle) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <p className="text-muted-foreground">{isLoading ? "Loading..." : "Battle not found."}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -79,33 +107,23 @@ const HostControl = () => {
                 <div key={p.id} className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <div className="h-7 w-7 rounded-full bg-muted flex items-center justify-center text-xs font-bold">
-                      {p.name.charAt(0)}
+                      {(p.display_name || "?").charAt(0)}
                     </div>
-                    <span className="text-sm text-foreground">{p.name}</span>
+                    <span className="text-sm text-foreground">{p.display_name || "Anonymous"}</span>
                   </div>
                   <span className="text-xs text-muted-foreground capitalize">{p.role}</span>
                 </div>
               ))}
+              {participants.length === 0 && (
+                <p className="text-sm text-muted-foreground">No participants yet</p>
+              )}
             </div>
           </div>
 
-          {/* Speaker Queue */}
+          {/* Speaker Queue placeholder */}
           <div className="rounded-2xl border border-border bg-card/80 p-6 backdrop-blur space-y-3">
             <h3 className="font-bold text-foreground">Speaker Queue</h3>
-            <div className="space-y-2">
-              {speakerRequests.map((r) => (
-                <div key={r.id} className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="h-7 w-7 rounded-full bg-muted flex items-center justify-center text-xs font-bold">{r.name.charAt(0)}</div>
-                    <span className="text-sm text-foreground">{r.name}</span>
-                  </div>
-                  <div className="flex gap-2">
-                    <button className="text-xs text-primary hover:underline">Approve</button>
-                    <button className="text-xs text-live hover:underline">Deny</button>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <p className="text-sm text-muted-foreground">No speaker requests</p>
           </div>
         </div>
 

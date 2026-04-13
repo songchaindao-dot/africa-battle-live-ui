@@ -1,18 +1,37 @@
 import { useState, useRef, useEffect } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import {
   ArrowLeft, Mic, MicOff, Users, Hand, Send, Play, Pause, SkipForward,
-  Square, UserPlus, Volume2, ExternalLink, Heart, Clock, Crown, Shield, Smile,
+  Square, UserPlus, Volume2, ExternalLink, Heart, Crown, Shield, Smile,
 } from "lucide-react";
 import LiveBadge from "@/components/LiveBadge";
 import { useBattle } from "@/hooks/useBattles";
-import { participants, speakerRequests, mockChatMessages, type ChatMessage } from "@/data/mockData";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+
+interface ChatMessage {
+  id: string;
+  userName: string;
+  text: string;
+  timestamp: Date;
+  type: "message" | "system" | "reaction";
+}
+
+interface RoomParticipant {
+  id: string;
+  display_name: string | null;
+  role: string;
+  is_muted: boolean;
+  is_speaking: boolean;
+  user_id: string;
+}
 
 type ViewRole = "host" | "co-host" | "audience";
 
 const LiveRoom = () => {
   const { roomId } = useParams();
   const navigate = useNavigate();
+  const { user, profile } = useAuth();
   const { data: battle, isLoading } = useBattle(roomId);
 
   const [viewRole, setViewRole] = useState<ViewRole>("audience");
@@ -23,10 +42,9 @@ const LiveRoom = () => {
   const [round, setRound] = useState(1);
   const [sidebarTab, setSidebarTab] = useState<"audience" | "requests" | "chat">("chat");
   const [requestedToSpeak, setRequestedToSpeak] = useState(false);
-  const [approvedRequests, setApprovedRequests] = useState<string[]>([]);
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>(mockChatMessages);
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [participants, setParticipants] = useState<RoomParticipant[]>([]);
 
-  // Sync state when battle data loads
   useEffect(() => {
     if (battle) {
       setLocalVotesA(battle.votesA);
@@ -34,6 +52,21 @@ const LiveRoom = () => {
       setRound(battle.round || 1);
     }
   }, [battle]);
+
+  // Fetch participants from battle_rooms
+  useEffect(() => {
+    if (!roomId) return;
+    const fetchParticipants = async () => {
+      const { data } = await supabase
+        .from("battle_rooms")
+        .select("id, display_name, role, is_muted, is_speaking, user_id")
+        .eq("battle_id", roomId)
+        .eq("is_active", true);
+      if (data) setParticipants(data);
+    };
+    fetchParticipants();
+  }, [roomId]);
+
   const [chatInput, setChatInput] = useState("");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
@@ -45,32 +78,11 @@ const LiveRoom = () => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chatMessages]);
 
-  // Simulate incoming messages
-  useEffect(() => {
-    const phrases = [
-      "Let's goooo! 🔥", "This is fire!", "Zambia represent! 🇿🇲",
-      "Artist A is winning this", "No way, Artist B has this 💪",
-      "Best battle yet!", "The vibes are immaculate ✨",
-    ];
-    const names = ["FanZM_99", "BeatLover", "ZedMusic", "Coppa_Sounds"];
-    const interval = setInterval(() => {
-      const msg: ChatMessage = {
-        id: `auto-${Date.now()}`,
-        userName: names[Math.floor(Math.random() * names.length)],
-        text: phrases[Math.floor(Math.random() * phrases.length)],
-        timestamp: new Date(),
-        type: "message",
-      };
-      setChatMessages((prev) => [...prev.slice(-50), msg]);
-    }, 8000);
-    return () => clearInterval(interval);
-  }, []);
-
   const sendMessage = () => {
     if (!chatInput.trim()) return;
     const msg: ChatMessage = {
       id: `user-${Date.now()}`,
-      userName: "You",
+      userName: profile?.display_name || profile?.username || "You",
       text: chatInput.trim(),
       timestamp: new Date(),
       type: "message",
@@ -84,14 +96,21 @@ const LiveRoom = () => {
     setChatInput((prev) => prev + emoji);
   };
 
-  const vote = (side: "A" | "B") => {
-    if (votedFor) return;
+  const vote = async (side: "A" | "B") => {
+    if (votedFor || !user || !roomId) return;
     setVotedFor(side);
     if (side === "A") setLocalVotesA((v) => v + 1);
     else setLocalVotesB((v) => v + 1);
+
+    await supabase.from("battle_votes").insert({
+      battle_id: roomId,
+      user_id: user.id,
+      side,
+      round,
+    });
   };
 
-  const host = participants.find((p) => p.role === "host")!;
+  const host = participants.find((p) => p.role === "host");
   const coHosts = participants.filter((p) => p.role === "co-host");
   const speakers = participants.filter((p) => p.role === "speaker");
   const audience = participants.filter((p) => p.role === "audience");
@@ -103,7 +122,7 @@ const LiveRoom = () => {
 
   const sidebarTabs = getSidebarTabs();
 
-  const ParticipantCircle = ({ p, size = "md" }: { p: typeof participants[0]; size?: "sm" | "md" | "lg" }) => {
+  const ParticipantCircle = ({ p, size = "md" }: { p: RoomParticipant; size?: "sm" | "md" | "lg" }) => {
     const sizes = {
       sm: "h-10 w-10 text-xs",
       md: "h-14 w-14 text-sm",
@@ -111,15 +130,15 @@ const LiveRoom = () => {
     };
     return (
       <div className="flex flex-col items-center gap-1">
-        <div className={`relative rounded-full bg-muted flex items-center justify-center font-bold ${sizes[size]} ${p.isSpeaking ? "ring-2 ring-primary ring-offset-2 ring-offset-background" : ""}`}>
-          {p.name.charAt(0)}
+        <div className={`relative rounded-full bg-muted flex items-center justify-center font-bold ${sizes[size]} ${p.is_speaking ? "ring-2 ring-primary ring-offset-2 ring-offset-background" : ""}`}>
+          {(p.display_name || "?").charAt(0)}
           {p.role === "host" && <Crown className="absolute -top-1 -right-1 h-4 w-4 text-neon-gold" />}
           {p.role === "co-host" && <Shield className="absolute -top-1 -right-1 h-4 w-4 text-neon-cyan" />}
         </div>
         <div className="flex items-center gap-1">
-          {p.isMuted ? <MicOff className="h-3 w-3 text-live" /> : <Mic className="h-3 w-3 text-primary" />}
+          {p.is_muted ? <MicOff className="h-3 w-3 text-live" /> : <Mic className="h-3 w-3 text-primary" />}
         </div>
-        <span className="text-[10px] text-muted-foreground text-center max-w-16 truncate">{p.name}</span>
+        <span className="text-[10px] text-muted-foreground text-center max-w-16 truncate">{p.display_name || "Anonymous"}</span>
       </div>
     );
   };
@@ -176,9 +195,12 @@ const LiveRoom = () => {
               <Mic className="h-4 w-4" /> Speaking Now
             </h3>
             <div className="flex flex-wrap gap-6 justify-center">
-              <ParticipantCircle p={host} size="lg" />
+              {host && <ParticipantCircle p={host} size="lg" />}
               {coHosts.map((p) => <ParticipantCircle key={p.id} p={p} />)}
               {speakers.map((p) => <ParticipantCircle key={p.id} p={p} />)}
+              {participants.length === 0 && (
+                <p className="text-sm text-muted-foreground">No speakers yet — join the room!</p>
+              )}
             </div>
           </div>
 
@@ -191,27 +213,25 @@ const LiveRoom = () => {
 
             <div className="grid grid-cols-3 gap-4 items-center mb-6">
               <div className="flex flex-col items-center gap-2 text-center">
-                <img src={battle.artistA.image} alt={battle.artistA.name} className="h-16 w-16 rounded-full object-cover border-2 border-primary/50" />
+                {battle.artistA.image && (
+                  <img src={battle.artistA.image} alt={battle.artistA.name} className="h-16 w-16 rounded-full object-cover border-2 border-primary/50" />
+                )}
                 <span className="text-sm font-bold text-foreground">{battle.artistA.name}</span>
                 <span className="text-[10px] text-muted-foreground">{battle.songA}</span>
-                <a href="#" className="text-[10px] text-primary hover:underline flex items-center gap-0.5">
+                <a href="https://www.songchainn.xyz" target="_blank" rel="noopener noreferrer" className="text-[10px] text-primary hover:underline flex items-center gap-0.5">
                   $ongChainn <ExternalLink className="h-2.5 w-2.5" />
                 </a>
-                <button className="text-[10px] text-muted-foreground hover:text-primary flex items-center gap-0.5">
-                  <Heart className="h-2.5 w-2.5" /> Follow
-                </button>
               </div>
               <div className="text-center font-display font-bold text-muted-foreground text-lg">VS</div>
               <div className="flex flex-col items-center gap-2 text-center">
-                <img src={battle.artistB.image} alt={battle.artistB.name} className="h-16 w-16 rounded-full object-cover border-2 border-secondary/50" />
+                {battle.artistB.image && (
+                  <img src={battle.artistB.image} alt={battle.artistB.name} className="h-16 w-16 rounded-full object-cover border-2 border-secondary/50" />
+                )}
                 <span className="text-sm font-bold text-foreground">{battle.artistB.name}</span>
                 <span className="text-[10px] text-muted-foreground">{battle.songB}</span>
-                <a href="#" className="text-[10px] text-primary hover:underline flex items-center gap-0.5">
+                <a href="https://www.songchainn.xyz" target="_blank" rel="noopener noreferrer" className="text-[10px] text-primary hover:underline flex items-center gap-0.5">
                   $ongChainn <ExternalLink className="h-2.5 w-2.5" />
                 </a>
-                <button className="text-[10px] text-muted-foreground hover:text-primary flex items-center gap-0.5">
-                  <Heart className="h-2.5 w-2.5" /> Follow
-                </button>
               </div>
             </div>
 
@@ -339,43 +359,31 @@ const LiveRoom = () => {
                 <p className="text-xs text-muted-foreground mb-3">{audience.length} in audience</p>
                 {audience.map((p) => (
                   <div key={p.id} className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-muted/30">
-                    <div className="h-7 w-7 rounded-full bg-muted flex items-center justify-center text-xs font-bold">{p.name.charAt(0)}</div>
-                    <span className="text-sm text-foreground">{p.name}</span>
+                    <div className="h-7 w-7 rounded-full bg-muted flex items-center justify-center text-xs font-bold">{(p.display_name || "?").charAt(0)}</div>
+                    <span className="text-sm text-foreground">{p.display_name || "Anonymous"}</span>
                   </div>
                 ))}
+                {audience.length === 0 && <p className="text-sm text-muted-foreground">No audience members yet</p>}
               </div>
             )}
 
             {sidebarTab === "requests" && (
               <div className="space-y-2">
-                <p className="text-xs text-muted-foreground mb-3">{speakerRequests.length} requests</p>
-                {speakerRequests.map((r) => (
-                  <div key={r.id} className="flex items-center justify-between gap-2 rounded-lg px-2 py-1.5 bg-muted/20">
-                    <div className="flex items-center gap-2">
-                      <div className="h-7 w-7 rounded-full bg-muted flex items-center justify-center text-xs font-bold">{r.name.charAt(0)}</div>
-                      <span className="text-sm text-foreground">{r.name}</span>
-                    </div>
-                    <div className="flex gap-1">
-                      <button
-                        onClick={() => setApprovedRequests((prev) => [...prev, r.id])}
-                        className="text-xs text-primary hover:underline"
-                      >
-                        Approve
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                <p className="text-xs text-muted-foreground mb-3">No speaker requests</p>
               </div>
             )}
 
             {sidebarTab === "chat" && (
               <div className="flex flex-col h-full">
                 <div className="flex-1 space-y-2 mb-3">
+                  {chatMessages.length === 0 && (
+                    <p className="text-sm text-muted-foreground text-center py-4">No messages yet. Start the conversation!</p>
+                  )}
                   {chatMessages.map((msg) => (
                     <div key={msg.id} className={`text-sm ${msg.type === "system" ? "text-center text-xs text-muted-foreground italic" : ""}`}>
                       {msg.type === "message" && (
                         <>
-                          <span className={`font-semibold ${msg.userName === "You" ? "text-primary" : "text-foreground"}`}>{msg.userName}</span>
+                          <span className={`font-semibold ${msg.userName === (profile?.display_name || profile?.username || "You") ? "text-primary" : "text-foreground"}`}>{msg.userName}</span>
                           <span className="text-[10px] text-muted-foreground/50 ml-1">{formatTime(msg.timestamp)}</span>
                           <p className="text-muted-foreground">{msg.text}</p>
                         </>
