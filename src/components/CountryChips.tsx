@@ -1,4 +1,10 @@
-import { countries } from "@/data/mockData";
+const countries = [
+  { name: "Zambia", status: "live" as const },
+  { name: "South Africa", status: "coming-soon" as const },
+  { name: "Nigeria", status: "coming-soon" as const },
+  { name: "Zimbabwe", status: "coming-soon" as const },
+  { name: "Botswana", status: "coming-soon" as const },
+];
 
 const CountryChips = () => (
   <div className="flex flex-wrap justify-center gap-3">
