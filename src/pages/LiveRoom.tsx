@@ -5,7 +5,8 @@ import {
   Square, UserPlus, Volume2, ExternalLink, Heart, Clock, Crown, Shield, Smile,
 } from "lucide-react";
 import LiveBadge from "@/components/LiveBadge";
-import { liveBattles, participants, speakerRequests, mockChatMessages, type ChatMessage } from "@/data/mockData";
+import { useBattle } from "@/hooks/useBattles";
+import { participants, speakerRequests, mockChatMessages, type ChatMessage } from "@/data/mockData";
 
 type ViewRole = "host" | "co-host" | "audience";
 
