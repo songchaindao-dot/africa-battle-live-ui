@@ -3,8 +3,16 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import Index from "./pages/Index.tsx";
-import NotFound from "./pages/NotFound.tsx";
+import Index from "./pages/Index";
+import HowItWorks from "./pages/HowItWorks";
+import LiveBattles from "./pages/LiveBattles";
+import UpcomingBattles from "./pages/UpcomingBattles";
+import Results from "./pages/Results";
+import BattleDetail from "./pages/BattleDetail";
+import LiveRoom from "./pages/LiveRoom";
+import HostCreate from "./pages/HostCreate";
+import HostControl from "./pages/HostControl";
+import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
@@ -16,7 +24,14 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          <Route path="/how-it-works" element={<HowItWorks />} />
+          <Route path="/battles/live" element={<LiveBattles />} />
+          <Route path="/battles/upcoming" element={<UpcomingBattles />} />
+          <Route path="/battles/results" element={<Results />} />
+          <Route path="/battle/:battleId" element={<BattleDetail />} />
+          <Route path="/room/:roomId" element={<LiveRoom />} />
+          <Route path="/host/create" element={<HostCreate />} />
+          <Route path="/host/control/:roomId" element={<HostControl />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
