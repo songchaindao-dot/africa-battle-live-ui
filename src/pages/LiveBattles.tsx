@@ -3,13 +3,14 @@ import { Search } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import BattleCard from "@/components/BattleCard";
-import { liveBattles } from "@/data/mockData";
+import { useBattles } from "@/hooks/useBattles";
 
 const regions = ["All", "Zambia", "South Africa", "Nigeria", "Zimbabwe"];
 
 const LiveBattles = () => {
   const [search, setSearch] = useState("");
   const [region, setRegion] = useState("All");
+  const { data: liveBattles = [], isLoading } = useBattles("live");
 
   const filtered = liveBattles.filter((b) => {
     if (region !== "All" && b.region !== region) return false;
@@ -50,11 +51,15 @@ const LiveBattles = () => {
           ))}
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {filtered.map((b) => <BattleCard key={b.id} battle={b} />)}
-        </div>
+        {isLoading ? (
+          <p className="text-center text-muted-foreground py-10">Loading battles...</p>
+        ) : (
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {filtered.map((b) => <BattleCard key={b.id} battle={b} />)}
+          </div>
+        )}
 
-        {filtered.length === 0 && (
+        {!isLoading && filtered.length === 0 && (
           <p className="text-center text-muted-foreground py-10">No live battles found.</p>
         )}
       </div>
