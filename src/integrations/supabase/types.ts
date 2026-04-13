@@ -80,6 +80,163 @@ export type Database = {
         }
         Relationships: []
       }
+      battle_rooms: {
+        Row: {
+          battle_id: string
+          display_name: string | null
+          id: string
+          is_active: boolean
+          is_muted: boolean
+          is_speaking: boolean
+          joined_at: string
+          last_seen_at: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          battle_id: string
+          display_name?: string | null
+          id?: string
+          is_active?: boolean
+          is_muted?: boolean
+          is_speaking?: boolean
+          joined_at?: string
+          last_seen_at?: string
+          role?: string
+          user_id: string
+        }
+        Update: {
+          battle_id?: string
+          display_name?: string | null
+          id?: string
+          is_active?: boolean
+          is_muted?: boolean
+          is_speaking?: boolean
+          joined_at?: string
+          last_seen_at?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "battle_rooms_battle_id_fkey"
+            columns: ["battle_id"]
+            isOneToOne: false
+            referencedRelation: "battles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      battle_votes: {
+        Row: {
+          battle_id: string
+          created_at: string
+          id: string
+          round: number
+          side: string
+          user_id: string
+        }
+        Insert: {
+          battle_id: string
+          created_at?: string
+          id?: string
+          round?: number
+          side: string
+          user_id: string
+        }
+        Update: {
+          battle_id?: string
+          created_at?: string
+          id?: string
+          round?: number
+          side?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "battle_votes_battle_id_fkey"
+            columns: ["battle_id"]
+            isOneToOne: false
+            referencedRelation: "battles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      battles: {
+        Row: {
+          artist_a_image: string | null
+          artist_a_name: string
+          artist_a_region: string | null
+          artist_b_image: string | null
+          artist_b_name: string
+          artist_b_region: string | null
+          co_hosts: string[] | null
+          created_at: string
+          ended_time: string | null
+          host_name: string
+          host_user_id: string | null
+          id: string
+          region: string
+          round: number
+          scheduled_time: string | null
+          song_a: string
+          song_b: string
+          status: string
+          title: string
+          total_rounds: number
+          updated_at: string
+          winner: string | null
+        }
+        Insert: {
+          artist_a_image?: string | null
+          artist_a_name: string
+          artist_a_region?: string | null
+          artist_b_image?: string | null
+          artist_b_name: string
+          artist_b_region?: string | null
+          co_hosts?: string[] | null
+          created_at?: string
+          ended_time?: string | null
+          host_name: string
+          host_user_id?: string | null
+          id?: string
+          region?: string
+          round?: number
+          scheduled_time?: string | null
+          song_a: string
+          song_b: string
+          status?: string
+          title: string
+          total_rounds?: number
+          updated_at?: string
+          winner?: string | null
+        }
+        Update: {
+          artist_a_image?: string | null
+          artist_a_name?: string
+          artist_a_region?: string | null
+          artist_b_image?: string | null
+          artist_b_name?: string
+          artist_b_region?: string | null
+          co_hosts?: string[] | null
+          created_at?: string
+          ended_time?: string | null
+          host_name?: string
+          host_user_id?: string | null
+          id?: string
+          region?: string
+          round?: number
+          scheduled_time?: string | null
+          song_a?: string
+          song_b?: string
+          status?: string
+          title?: string
+          total_rounds?: number
+          updated_at?: string
+          winner?: string | null
+        }
+        Relationships: []
+      }
       liked_artists: {
         Row: {
           artist_id: string
@@ -444,6 +601,37 @@ export type Database = {
       }
     }
     Views: {
+      battle_listener_counts: {
+        Row: {
+          battle_id: string | null
+          listener_count: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "battle_rooms_battle_id_fkey"
+            columns: ["battle_id"]
+            isOneToOne: false
+            referencedRelation: "battles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      battle_vote_counts: {
+        Row: {
+          battle_id: string | null
+          side: string | null
+          vote_count: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "battle_votes_battle_id_fkey"
+            columns: ["battle_id"]
+            isOneToOne: false
+            referencedRelation: "battles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profile_popularity: {
         Row: {
           avatar_url: string | null
