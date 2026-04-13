@@ -13,18 +13,27 @@ type ViewRole = "host" | "co-host" | "audience";
 const LiveRoom = () => {
   const { roomId } = useParams();
   const navigate = useNavigate();
-  const battle = liveBattles.find((b) => b.id === roomId) || liveBattles[0];
+  const { data: battle, isLoading } = useBattle(roomId);
 
   const [viewRole, setViewRole] = useState<ViewRole>("audience");
   const [votedFor, setVotedFor] = useState<"A" | "B" | null>(null);
-  const [localVotesA, setLocalVotesA] = useState(battle.votesA);
-  const [localVotesB, setLocalVotesB] = useState(battle.votesB);
+  const [localVotesA, setLocalVotesA] = useState(0);
+  const [localVotesB, setLocalVotesB] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
-  const [round, setRound] = useState(battle.round);
+  const [round, setRound] = useState(1);
   const [sidebarTab, setSidebarTab] = useState<"audience" | "requests" | "chat">("chat");
   const [requestedToSpeak, setRequestedToSpeak] = useState(false);
   const [approvedRequests, setApprovedRequests] = useState<string[]>([]);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>(mockChatMessages);
+
+  // Sync state when battle data loads
+  useEffect(() => {
+    if (battle) {
+      setLocalVotesA(battle.votesA);
+      setLocalVotesB(battle.votesB);
+      setRound(battle.round || 1);
+    }
+  }, [battle]);
   const [chatInput, setChatInput] = useState("");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
