@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Users, Music, Trophy } from "lucide-react";
-import type { Battle } from "@/data/mockData";
+import type { Battle } from "@/hooks/useBattles";
 import LiveBadge from "./LiveBadge";
 
 const ArtistAvatar = ({ name, image, side }: { name: string; image: string; side: "A" | "B" }) => (

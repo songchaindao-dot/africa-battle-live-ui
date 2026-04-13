@@ -3,11 +3,19 @@ import { ArrowLeft, Users, Share2, Play, Trophy } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import LiveBadge from "@/components/LiveBadge";
-import { liveBattles, upcomingBattles, endedBattles } from "@/data/mockData";
+import { useBattle } from "@/hooks/useBattles";
 
 const BattleDetail = () => {
   const { battleId } = useParams();
-  const battle = [...liveBattles, ...upcomingBattles, ...endedBattles].find((b) => b.id === battleId);
+  const { data: battle, isLoading } = useBattle(battleId);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <p className="text-muted-foreground">Loading battle...</p>
+      </div>
+    );
+  }
 
   if (!battle) {
     return (
@@ -40,7 +48,6 @@ const BattleDetail = () => {
 
         <h1 className="text-3xl font-display font-black text-foreground">{battle.title}</h1>
 
-        {/* VS layout */}
         <div className="grid grid-cols-3 gap-6 items-center">
           <div className="flex flex-col items-center gap-3 text-center">
             <img src={battle.artistA.image} alt={battle.artistA.name} className="h-24 w-24 rounded-full object-cover border-2 border-primary/50" />
@@ -49,11 +56,9 @@ const BattleDetail = () => {
             <span className="text-xs text-muted-foreground">{battle.artistA.region}</span>
             {battle.winner === "A" && <span className="rounded-full bg-neon-gold/20 px-3 py-1 text-xs font-bold text-neon-gold">🏆 Winner</span>}
           </div>
-
           <div className="flex flex-col items-center">
             <span className="text-2xl font-display font-bold text-muted-foreground">VS</span>
           </div>
-
           <div className="flex flex-col items-center gap-3 text-center">
             <img src={battle.artistB.image} alt={battle.artistB.name} className="h-24 w-24 rounded-full object-cover border-2 border-secondary/50" />
             <h3 className="font-bold text-foreground">{battle.artistB.name}</h3>
@@ -63,7 +68,6 @@ const BattleDetail = () => {
           </div>
         </div>
 
-        {/* Votes */}
         {totalVotes > 0 && (
           <div>
             <div className="flex justify-between text-sm text-muted-foreground mb-2">
@@ -77,7 +81,6 @@ const BattleDetail = () => {
           </div>
         )}
 
-        {/* Info */}
         <div className="rounded-2xl border border-border bg-card/80 p-6 space-y-2 text-sm text-muted-foreground backdrop-blur">
           <p><Users className="inline h-4 w-4 mr-1" /> {battle.listeners.toLocaleString()} listeners</p>
           <p>Host: <span className="text-foreground font-medium">{battle.host}</span></p>
@@ -85,7 +88,6 @@ const BattleDetail = () => {
           <p>Round {battle.round}/{battle.totalRounds}</p>
         </div>
 
-        {/* Rules */}
         <div className="rounded-2xl border border-border bg-card/80 p-6 backdrop-blur">
           <h3 className="font-bold text-foreground mb-3">Battle Rules</h3>
           <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
@@ -96,7 +98,6 @@ const BattleDetail = () => {
           </ul>
         </div>
 
-        {/* CTAs */}
         <div className="flex flex-wrap gap-4">
           {battle.status === "live" && (
             <Link to={`/room/${battle.id}`} className="inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-3 font-bold text-primary-foreground hover:bg-primary/90 transition-all">
