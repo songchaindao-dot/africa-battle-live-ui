@@ -1,3 +1,3 @@
-# Welcome to your Lovable project
+# WaveWarz Africa Battle Zone
 
-TODO: Document your project here
+Frontend app for WaveWarz Africa live music battles and hosting flows.

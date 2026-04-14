@@ -1,5 +1,5 @@
-import { Link } from "react-router-dom";
 import { Zap, Play, HelpCircle } from "lucide-react";
+import AppLink from "@/components/AppLink";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import BattleCard from "@/components/BattleCard";
@@ -8,23 +8,26 @@ import CountryChips from "@/components/CountryChips";
 import SectionHeader from "@/components/SectionHeader";
 import { useBattles } from "@/hooks/useBattles";
 import wavewarzLogo from "@/assets/wavewarz-logo-2.png";
+import { useEmbedMode } from "@/contexts/EmbedModeContext";
+import EmbedTopBar from "@/components/EmbedTopBar";
 
 const Index = () => {
+  const { isEmbedded } = useEmbedMode();
   const { data: liveBattles = [] } = useBattles("live");
   const { data: upcomingBattles = [] } = useBattles("upcoming");
   const { data: endedBattles = [] } = useBattles("ended");
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
+      {isEmbedded ? <EmbedTopBar title="BattleZone Home" /> : <Navbar />}
 
       {/* Hero */}
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 gradient-battle opacity-40" />
-        <div className="relative mx-auto max-w-7xl px-4 py-20 md:py-28 flex flex-col md:flex-row items-center gap-10">
+        <div className={`relative mx-auto max-w-7xl px-4 ${isEmbedded ? "py-10 md:py-14" : "py-20 md:py-28"} flex flex-col md:flex-row items-center gap-10`}>
           <div className="flex-1 text-center md:text-left">
             <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 text-xs font-semibold text-primary mb-6">
-              <Zap className="h-3 w-3" /> WaveWarz Africa
+              <Zap className="h-3 w-3" /> WaveWarz Africa Battle Zone
             </div>
             <h1 className="text-4xl md:text-6xl font-display font-black text-foreground leading-tight mb-6">
               Prepare For The Next Music Battle Wave{" "}
@@ -34,24 +37,24 @@ const Index = () => {
               Compete. Vote. Host. Discover the hottest artists across Africa in real-time live battle rooms.
             </p>
             <div className="flex flex-wrap gap-4 justify-center md:justify-start">
-              <Link to="/battles/live" className="inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-3 font-bold text-primary-foreground hover:bg-primary/90 transition-all hover:shadow-[0_0_25px_hsl(var(--neon-green)/0.3)]">
+              <AppLink to="/battles/live" className="inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-3 font-bold text-primary-foreground hover:bg-primary/90 transition-all hover:shadow-[0_0_25px_hsl(var(--neon-green)/0.3)]">
                 <Play className="h-4 w-4" /> Join Live Battle
-              </Link>
-              <Link to="/host/create" className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-6 py-3 font-bold text-foreground hover:bg-muted transition-colors">
+              </AppLink>
+              <AppLink to="/host/create" className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-6 py-3 font-bold text-foreground hover:bg-muted transition-colors">
                 <Zap className="h-4 w-4" /> Host a Battle
-              </Link>
-              <Link to="/how-it-works" className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-6 py-3 font-medium text-muted-foreground hover:bg-muted transition-colors">
+              </AppLink>
+              <AppLink to="/how-it-works" className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-6 py-3 font-medium text-muted-foreground hover:bg-muted transition-colors">
                 <HelpCircle className="h-4 w-4" /> How It Works
-              </Link>
+              </AppLink>
             </div>
           </div>
           <div className="flex-shrink-0">
-            <img src={wavewarzLogo} alt="WaveWarz Africa" className="w-64 md:w-80 float-slow" />
+            <img src={wavewarzLogo} alt="WaveWarz Africa Battle Zone" className="w-64 md:w-80 float-slow" />
           </div>
         </div>
       </section>
 
-      <div className="mx-auto max-w-7xl px-4 space-y-16">
+      <div className={`mx-auto max-w-7xl px-4 ${isEmbedded ? "space-y-10 pb-6" : "space-y-16"}`}>
         <StatsRow />
         <CountryChips />
 
@@ -84,13 +87,13 @@ const Index = () => {
           <p className="text-muted-foreground mb-6 max-w-md mx-auto">
             Create your own battle room, invite artists, and let Africa decide who wins.
           </p>
-          <Link to="/host/create" className="inline-flex items-center gap-2 rounded-xl bg-primary px-8 py-3 font-bold text-primary-foreground hover:bg-primary/90 transition-all hover:shadow-[0_0_25px_hsl(var(--neon-green)/0.3)]">
+          <AppLink to="/host/create" className="inline-flex items-center gap-2 rounded-xl bg-primary px-8 py-3 font-bold text-primary-foreground hover:bg-primary/90 transition-all hover:shadow-[0_0_25px_hsl(var(--neon-green)/0.3)]">
             <Zap className="h-4 w-4" /> Host a Battle
-          </Link>
+          </AppLink>
         </section>
       </div>
 
-      <Footer />
+      {!isEmbedded && <Footer />}
     </div>
   );
 };

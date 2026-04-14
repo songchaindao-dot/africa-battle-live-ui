@@ -2,14 +2,17 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import BattleCard from "@/components/BattleCard";
 import { useBattles } from "@/hooks/useBattles";
+import { useEmbedMode } from "@/contexts/EmbedModeContext";
+import EmbedTopBar from "@/components/EmbedTopBar";
 
 const Results = () => {
+  const { isEmbedded } = useEmbedMode();
   const { data: endedBattles = [], isLoading } = useBattles("ended");
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
-      <div className="mx-auto max-w-7xl px-4 py-12 space-y-8">
+      {isEmbedded ? <EmbedTopBar title="Battle Results" /> : <Navbar />}
+      <div className={`mx-auto max-w-7xl px-4 ${isEmbedded ? "py-6" : "py-12"} space-y-8`}>
         <div className="text-center">
           <h1 className="text-3xl font-display font-black text-foreground mb-2">🏆 Battle Results</h1>
           <p className="text-muted-foreground">See who came out on top</p>
@@ -25,7 +28,7 @@ const Results = () => {
           <p className="text-center text-muted-foreground py-10">No results yet.</p>
         )}
       </div>
-      <Footer />
+      {!isEmbedded && <Footer />}
     </div>
   );
 };

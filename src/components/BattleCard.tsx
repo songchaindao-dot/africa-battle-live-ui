@@ -1,7 +1,7 @@
-import { Link } from "react-router-dom";
 import { Users, Music, Trophy } from "lucide-react";
 import type { Battle } from "@/hooks/useBattles";
 import LiveBadge from "./LiveBadge";
+import AppLink from "./AppLink";
 
 const ArtistAvatar = ({ name, image, side }: { name: string; image: string; side: "A" | "B" }) => (
   image ? (
@@ -20,7 +20,7 @@ const BattleCard = ({ battle }: { battle: Battle }) => {
   const pctA = totalVotes ? Math.round((battle.votesA / totalVotes) * 100) : 50;
 
   return (
-    <Link to={isLive ? `/room/${battle.id}` : `/battle/${battle.id}`} className="group block rounded-2xl border border-border bg-card/80 p-5 backdrop-blur transition-all hover:border-primary/30 hover:shadow-[0_0_30px_hsl(var(--neon-green)/0.08)]">
+    <AppLink to={isLive ? `/room/${battle.id}` : `/battle/${battle.id}`} className="group block rounded-2xl border border-border bg-card/80 p-5 backdrop-blur transition-all hover:border-primary/30 hover:shadow-[0_0_30px_hsl(var(--neon-green)/0.08)]">
       <div className="flex items-center justify-between mb-3">
         {isLive && <LiveBadge />}
         {isEnded && (
@@ -79,7 +79,7 @@ const BattleCard = ({ battle }: { battle: Battle }) => {
           {isLive ? "Join Room →" : isEnded ? "View Results →" : "View Battle →"}
         </span>
       </div>
-    </Link>
+    </AppLink>
   );
 };
 

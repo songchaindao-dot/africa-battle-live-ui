@@ -1,11 +1,15 @@
-import { useParams, Link } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { ArrowLeft, Users, Share2, Play, Trophy } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import LiveBadge from "@/components/LiveBadge";
 import { useBattle } from "@/hooks/useBattles";
+import { useEmbedMode } from "@/contexts/EmbedModeContext";
+import EmbedTopBar from "@/components/EmbedTopBar";
+import AppLink from "@/components/AppLink";
 
 const BattleDetail = () => {
+  const { isEmbedded } = useEmbedMode();
   const { battleId } = useParams();
   const { data: battle, isLoading } = useBattle(battleId);
 
@@ -22,7 +26,7 @@ const BattleDetail = () => {
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <p className="text-muted-foreground mb-4">Battle not found.</p>
-          <Link to="/" className="text-primary hover:underline">Go Home</Link>
+          <AppLink to="/" className="text-primary hover:underline">Go Home</AppLink>
         </div>
       </div>
     );
@@ -33,11 +37,11 @@ const BattleDetail = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
-      <div className="mx-auto max-w-4xl px-4 py-12 space-y-8">
-        <Link to="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
+      {isEmbedded ? <EmbedTopBar title="Battle Details" /> : <Navbar />}
+      <div className={`mx-auto max-w-4xl px-4 ${isEmbedded ? "py-6" : "py-12"} space-y-8`}>
+        <AppLink to="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
           <ArrowLeft className="h-4 w-4" /> Back
-        </Link>
+        </AppLink>
 
         <div className="flex flex-wrap items-center gap-3">
           {battle.status === "live" && <LiveBadge />}
@@ -100,9 +104,9 @@ const BattleDetail = () => {
 
         <div className="flex flex-wrap gap-4">
           {battle.status === "live" && (
-            <Link to={`/room/${battle.id}`} className="inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-3 font-bold text-primary-foreground hover:bg-primary/90 transition-all">
+            <AppLink to={`/room/${battle.id}`} className="inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-3 font-bold text-primary-foreground hover:bg-primary/90 transition-all">
               <Play className="h-4 w-4" /> Enter Room
-            </Link>
+            </AppLink>
           )}
           <button className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-6 py-3 font-bold text-foreground hover:bg-muted transition-colors">
             <Trophy className="h-4 w-4" /> Vote Now
@@ -112,7 +116,7 @@ const BattleDetail = () => {
           </button>
         </div>
       </div>
-      <Footer />
+      {!isEmbedded && <Footer />}
     </div>
   );
 };

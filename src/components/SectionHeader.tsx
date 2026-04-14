@@ -1,5 +1,5 @@
-import { Link } from "react-router-dom";
 import { ChevronRight } from "lucide-react";
+import AppLink from "@/components/AppLink";
 
 interface SectionHeaderProps {
   title: string;
@@ -15,9 +15,9 @@ const SectionHeader = ({ title, subtitle, linkTo, linkLabel }: SectionHeaderProp
       {subtitle && <p className="text-sm text-muted-foreground mt-1">{subtitle}</p>}
     </div>
     {linkTo && (
-      <Link to={linkTo} className="flex items-center gap-1 text-sm font-medium text-primary hover:text-primary/80 transition-colors">
+      <AppLink to={linkTo} className="flex items-center gap-1 text-sm font-medium text-primary hover:text-primary/80 transition-colors">
         {linkLabel || "View All"} <ChevronRight className="h-4 w-4" />
-      </Link>
+      </AppLink>
     )}
   </div>
 );

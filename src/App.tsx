@@ -4,6 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { EmbedModeProvider } from "@/contexts/EmbedModeContext";
 import AuthGate from "@/components/AuthGate";
 import Index from "./pages/Index";
 import HowItWorks from "./pages/HowItWorks";
@@ -25,20 +26,22 @@ const App = () => (
       <Sonner />
       <AuthProvider>
         <BrowserRouter>
-          <AuthGate>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/how-it-works" element={<HowItWorks />} />
-              <Route path="/battles/live" element={<LiveBattles />} />
-              <Route path="/battles/upcoming" element={<UpcomingBattles />} />
-              <Route path="/battles/results" element={<Results />} />
-              <Route path="/battle/:battleId" element={<BattleDetail />} />
-              <Route path="/room/:roomId" element={<LiveRoom />} />
-              <Route path="/host/create" element={<HostCreate />} />
-              <Route path="/host/control/:roomId" element={<HostControl />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </AuthGate>
+          <EmbedModeProvider>
+            <AuthGate>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/how-it-works" element={<HowItWorks />} />
+                <Route path="/battles/live" element={<LiveBattles />} />
+                <Route path="/battles/upcoming" element={<UpcomingBattles />} />
+                <Route path="/battles/results" element={<Results />} />
+                <Route path="/battle/:battleId" element={<BattleDetail />} />
+                <Route path="/room/:roomId" element={<LiveRoom />} />
+                <Route path="/host/create" element={<HostCreate />} />
+                <Route path="/host/control/:roomId" element={<HostControl />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </AuthGate>
+          </EmbedModeProvider>
         </BrowserRouter>
       </AuthProvider>
     </TooltipProvider>

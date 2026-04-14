@@ -1,11 +1,41 @@
+import { useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Zap, ExternalLink, Loader2 } from "lucide-react";
 import wavewarzLogo from "@/assets/wavewarz-logo-2.png";
 
 const SONGCHAINN_URL = "https://www.songchainn.xyz";
+const SONGCHAINN_SSO_URL = import.meta.env.VITE_SONGCHAINN_SSO_URL as string | undefined;
+const AUTO_AUTH_ATTEMPT_KEY = "songchainn:auto-auth-attempted";
+
+const buildSongchainAuthUrl = (redirectTo: string) => {
+  if (!SONGCHAINN_SSO_URL) return SONGCHAINN_URL;
+
+  try {
+    const url = new URL(SONGCHAINN_SSO_URL);
+    url.searchParams.set("redirect", redirectTo);
+    return url.toString();
+  } catch {
+    return `${SONGCHAINN_SSO_URL}?redirect=${encodeURIComponent(redirectTo)}`;
+  }
+};
 
 const AuthGate = ({ children }: { children: React.ReactNode }) => {
   const { user, profile, loading } = useAuth();
+  const authUrl = buildSongchainAuthUrl(window.location.href);
+
+  useEffect(() => {
+    if (loading || user || profile || !SONGCHAINN_SSO_URL) return;
+    if (sessionStorage.getItem(AUTO_AUTH_ATTEMPT_KEY) === "1") return;
+
+    sessionStorage.setItem(AUTO_AUTH_ATTEMPT_KEY, "1");
+    window.location.href = buildSongchainAuthUrl(window.location.href);
+  }, [loading, user, profile]);
+
+  useEffect(() => {
+    if (user && profile) {
+      sessionStorage.removeItem(AUTO_AUTH_ATTEMPT_KEY);
+    }
+  }, [user, profile]);
 
   if (loading) {
     return (
@@ -26,7 +56,7 @@ const AuthGate = ({ children }: { children: React.ReactNode }) => {
           
           <div className="space-y-3">
             <h1 className="text-3xl font-display font-black text-foreground">
-              WaveWarz Africa
+              WaveWarz Africa Battle Zone
             </h1>
             <p className="text-muted-foreground">
               Access WaveWarz through your <span className="text-primary font-semibold">$ongChainn</span> account. 
@@ -36,7 +66,7 @@ const AuthGate = ({ children }: { children: React.ReactNode }) => {
 
           <div className="space-y-4">
             <a
-              href={SONGCHAINN_URL}
+              href={authUrl}
               className="w-full inline-flex items-center justify-center gap-3 rounded-xl bg-primary px-6 py-4 font-bold text-primary-foreground text-lg hover:bg-primary/90 transition-all hover:shadow-[0_0_30px_hsl(var(--neon-green)/0.3)]"
             >
               <Zap className="h-5 w-5" /> Sign in to $ongChainn

@@ -8,6 +8,9 @@ import LiveBadge from "@/components/LiveBadge";
 import { useBattle } from "@/hooks/useBattles";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { fetchSongchainUserIdSet } from "@/lib/songchain";
+import { useEmbedMode } from "@/contexts/EmbedModeContext";
+import EmbedTopBar from "@/components/EmbedTopBar";
 
 interface ChatMessage {
   id: string;
@@ -29,6 +32,7 @@ interface RoomParticipant {
 type ViewRole = "host" | "co-host" | "audience";
 
 const LiveRoom = () => {
+  const { isEmbedded } = useEmbedMode();
   const { roomId } = useParams();
   const navigate = useNavigate();
   const { user, profile } = useAuth();
@@ -57,12 +61,15 @@ const LiveRoom = () => {
   useEffect(() => {
     if (!roomId) return;
     const fetchParticipants = async () => {
+      const songchainUserIds = await fetchSongchainUserIdSet();
       const { data } = await supabase
         .from("battle_rooms")
         .select("id, display_name, role, is_muted, is_speaking, user_id")
         .eq("battle_id", roomId)
         .eq("is_active", true);
-      if (data) setParticipants(data);
+      if (data) {
+        setParticipants(data.filter((participant) => songchainUserIds.has(participant.user_id)));
+      }
     };
     fetchParticipants();
   }, [roomId]);
@@ -156,7 +163,8 @@ const LiveRoom = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className={`${isEmbedded ? "h-full min-h-full" : "min-h-screen"} bg-background flex flex-col`}>
+      <EmbedTopBar title="Live Room" />
       {/* Header */}
       <div className="border-b border-border bg-card/60 backdrop-blur-xl px-4 py-3">
         <div className="mx-auto max-w-7xl flex items-center justify-between">
@@ -188,7 +196,7 @@ const LiveRoom = () => {
 
       {/* Main */}
       <div className="flex-1 flex flex-col lg:flex-row">
-        <div className="flex-1 p-4 space-y-6 overflow-y-auto">
+        <div className={`flex-1 ${isEmbedded ? "p-3" : "p-4"} space-y-6 overflow-y-auto`}>
           {/* Speaking Area */}
           <div className="rounded-2xl border border-border bg-card/60 p-6 backdrop-blur">
             <h3 className="text-sm font-bold text-muted-foreground mb-4 flex items-center gap-2">

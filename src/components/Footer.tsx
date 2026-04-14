@@ -1,5 +1,5 @@
-import { Link } from "react-router-dom";
 import { Zap } from "lucide-react";
+import AppLink from "@/components/AppLink";
 
 const Footer = () => (
   <footer className="border-t border-border bg-card/40 backdrop-blur mt-20">
@@ -10,11 +10,11 @@ const Footer = () => (
           <span className="font-display font-bold text-foreground">WaveWarz Africa</span>
         </div>
         <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-muted-foreground">
-          <Link to="/" className="hover:text-foreground transition-colors">Home</Link>
-          <Link to="/battles/live" className="hover:text-foreground transition-colors">Live Battles</Link>
-          <Link to="/battles/upcoming" className="hover:text-foreground transition-colors">Upcoming</Link>
-          <Link to="/battles/results" className="hover:text-foreground transition-colors">Results</Link>
-          <Link to="/how-it-works" className="hover:text-foreground transition-colors">How It Works</Link>
+          <AppLink to="/" className="hover:text-foreground transition-colors">Home</AppLink>
+          <AppLink to="/battles/live" className="hover:text-foreground transition-colors">Live Battles</AppLink>
+          <AppLink to="/battles/upcoming" className="hover:text-foreground transition-colors">Upcoming</AppLink>
+          <AppLink to="/battles/results" className="hover:text-foreground transition-colors">Results</AppLink>
+          <AppLink to="/how-it-works" className="hover:text-foreground transition-colors">How It Works</AppLink>
         </div>
         <div className="text-xs text-muted-foreground">
           Powered by <span className="text-primary font-semibold">$ongChainn</span>

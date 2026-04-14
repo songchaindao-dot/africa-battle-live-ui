@@ -60,6 +60,8 @@ const HostCreate = () => {
       const { data } = await supabase
         .from("audience_profiles")
         .select("id, user_id, username, display_name, avatar_url")
+        .eq("onboarding_completed", true)
+        .not("user_id", "is", null)
         .limit(50);
       if (data) setUsers(data as SongchainUser[]);
     };

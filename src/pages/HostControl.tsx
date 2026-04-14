@@ -6,6 +6,7 @@ import {
 import Navbar from "@/components/Navbar";
 import { useBattle } from "@/hooks/useBattles";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchSongchainUserIdSet } from "@/lib/songchain";
 
 const HostControl = () => {
   const { roomId } = useParams();
@@ -26,12 +27,15 @@ const HostControl = () => {
   useEffect(() => {
     if (!roomId) return;
     const fetchParticipants = async () => {
+      const songchainUserIds = await fetchSongchainUserIdSet();
       const { data } = await supabase
         .from("battle_rooms")
         .select("*")
         .eq("battle_id", roomId)
         .eq("is_active", true);
-      if (data) setParticipants(data);
+      if (data) {
+        setParticipants(data.filter((participant) => songchainUserIds.has(participant.user_id)));
+      }
     };
     fetchParticipants();
   }, [roomId]);

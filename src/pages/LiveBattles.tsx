@@ -4,10 +4,13 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import BattleCard from "@/components/BattleCard";
 import { useBattles } from "@/hooks/useBattles";
+import { useEmbedMode } from "@/contexts/EmbedModeContext";
+import EmbedTopBar from "@/components/EmbedTopBar";
 
 const regions = ["All", "Zambia", "South Africa", "Nigeria", "Zimbabwe"];
 
 const LiveBattles = () => {
+  const { isEmbedded } = useEmbedMode();
   const [search, setSearch] = useState("");
   const [region, setRegion] = useState("All");
   const { data: liveBattles = [], isLoading } = useBattles("live");
@@ -20,8 +23,8 @@ const LiveBattles = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
-      <div className="mx-auto max-w-7xl px-4 py-12 space-y-8">
+      {isEmbedded ? <EmbedTopBar title="Live Battles" /> : <Navbar />}
+      <div className={`mx-auto max-w-7xl px-4 ${isEmbedded ? "py-6" : "py-12"} space-y-8`}>
         <div className="text-center">
           <h1 className="text-3xl font-display font-black text-foreground mb-2">🔴 Live Battles</h1>
           <p className="text-muted-foreground">Jump into a battle happening right now</p>
@@ -63,7 +66,7 @@ const LiveBattles = () => {
           <p className="text-center text-muted-foreground py-10">No live battles found.</p>
         )}
       </div>
-      <Footer />
+      {!isEmbedded && <Footer />}
     </div>
   );
 };

@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchSongchainUserIds } from "@/lib/songchain";
 
 export interface BattleRow {
   id: string;
@@ -80,7 +81,14 @@ function rowToBattle(row: BattleRow, votesA = 0, votesB = 0, listeners = 0): Bat
 }
 
 async function fetchBattles(status?: string): Promise<Battle[]> {
-  let query = supabase.from("battles").select("*");
+  const songchainUserIds = await fetchSongchainUserIds();
+  if (!songchainUserIds.length) return [];
+
+  let query = supabase
+    .from("battles")
+    .select("*")
+    .in("host_user_id", songchainUserIds);
+
   if (status) query = query.eq("status", status);
   query = query.order("created_at", { ascending: false });
 
@@ -88,15 +96,19 @@ async function fetchBattles(status?: string): Promise<Battle[]> {
   if (error) throw error;
   if (!battles?.length) return [];
 
+  const battleIds = battles.map((b) => b.id);
+
   // Fetch vote counts
   const { data: voteCounts } = await supabase
     .from("battle_vote_counts")
-    .select("*");
+    .select("*")
+    .in("battle_id", battleIds);
 
   // Fetch listener counts
   const { data: listenerCounts } = await supabase
     .from("battle_listener_counts")
-    .select("*");
+    .select("*")
+    .in("battle_id", battleIds);
 
   const voteMap = new Map<string, { A: number; B: number }>();
   voteCounts?.forEach((v: any) => {
