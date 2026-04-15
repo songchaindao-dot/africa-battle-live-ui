@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import LiveBadge from "@/components/LiveBadge";
 import { useBattle } from "@/hooks/useBattles";
+import { useBattles } from "@/hooks/useBattles";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { fetchSongchainUserIdSet } from "@/lib/songchain";
@@ -32,11 +33,12 @@ interface RoomParticipant {
 type ViewRole = "host" | "co-host" | "audience";
 
 const LiveRoom = () => {
-  const { isEmbedded } = useEmbedMode();
+  const { isEmbedded, embedTo } = useEmbedMode();
   const { roomId } = useParams();
   const navigate = useNavigate();
   const { user, profile } = useAuth();
   const { data: battle, isLoading } = useBattle(roomId);
+  const { data: liveBattles = [] } = useBattles("live");
 
   const [viewRole, setViewRole] = useState<ViewRole>("audience");
   const [votedFor, setVotedFor] = useState<"A" | "B" | null>(null);
@@ -48,6 +50,28 @@ const LiveRoom = () => {
   const [requestedToSpeak, setRequestedToSpeak] = useState(false);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [participants, setParticipants] = useState<RoomParticipant[]>([]);
+  const [isVerySmallMobile, setIsVerySmallMobile] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const evaluateViewport = () => {
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+      const coarsePointer = window.matchMedia("(pointer: coarse)").matches;
+      // Compact mode only for very constrained phone screens.
+      const compact = coarsePointer && (width <= 380 || (width <= 430 && height <= 760));
+      setIsVerySmallMobile(compact);
+    };
+
+    evaluateViewport();
+    window.addEventListener("resize", evaluateViewport);
+    window.addEventListener("orientationchange", evaluateViewport);
+    return () => {
+      window.removeEventListener("resize", evaluateViewport);
+      window.removeEventListener("orientationchange", evaluateViewport);
+    };
+  }, []);
 
   useEffect(() => {
     if (battle) {
@@ -128,6 +152,7 @@ const LiveRoom = () => {
   };
 
   const sidebarTabs = getSidebarTabs();
+  const switchableBattles = liveBattles.filter((b) => b.id !== roomId).slice(0, 4);
 
   const ParticipantCircle = ({ p, size = "md" }: { p: RoomParticipant; size?: "sm" | "md" | "lg" }) => {
     const sizes = {
@@ -166,31 +191,47 @@ const LiveRoom = () => {
     <div className={`${isEmbedded ? "h-full min-h-full" : "min-h-screen"} bg-background flex flex-col`}>
       <EmbedTopBar title="Live Room" />
       {/* Header */}
-      <div className="border-b border-border bg-card/60 backdrop-blur-xl px-4 py-3">
+      <div className={`border-b border-border bg-card/60 backdrop-blur-xl ${isVerySmallMobile ? "px-2.5 py-2" : "px-4 py-3"}`}>
         <div className="mx-auto max-w-7xl flex items-center justify-between">
-          <div className="flex items-center gap-3">
+          <div className={`flex items-center ${isVerySmallMobile ? "gap-2 min-w-0" : "gap-3"}`}>
             <button onClick={() => navigate("/")} className="text-muted-foreground hover:text-foreground transition-colors">
-              <ArrowLeft className="h-5 w-5" />
+              <ArrowLeft className={isVerySmallMobile ? "h-4 w-4" : "h-5 w-5"} />
             </button>
-            <div>
+            <div className="min-w-0">
               <div className="flex items-center gap-2">
                 <LiveBadge />
-                <h1 className="text-sm font-bold text-foreground">{battle.title}</h1>
+                <h1 className={`font-bold text-foreground truncate ${isVerySmallMobile ? "text-xs max-w-[150px]" : "text-sm"}`}>{battle.title}</h1>
               </div>
-              <p className="text-xs text-muted-foreground">{battle.listeners.toLocaleString()} listening • Round {round}/{battle.totalRounds}</p>
+              <p className={`${isVerySmallMobile ? "text-[11px]" : "text-xs"} text-muted-foreground truncate`}>
+                {battle.listeners.toLocaleString()} listening • Round {round}/{battle.totalRounds}
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <select
               value={viewRole}
               onChange={(e) => setViewRole(e.target.value as ViewRole)}
-              className="rounded-lg border border-border bg-card px-3 py-1.5 text-xs text-foreground"
+              className={`rounded-lg border border-border bg-card text-foreground ${isVerySmallMobile ? "px-2 py-1 text-[11px]" : "px-3 py-1.5 text-xs"}`}
             >
               <option value="audience">Audience View</option>
               <option value="co-host">Co-Host View</option>
               <option value="host">Host View</option>
             </select>
           </div>
+        </div>
+        <div className={`mx-auto max-w-7xl flex flex-wrap items-center ${isVerySmallMobile ? "mt-2 gap-1.5" : "mt-3 gap-2"}`}>
+          <span className={`${isVerySmallMobile ? "text-[10px]" : "text-[11px]"} font-semibold uppercase tracking-wide text-muted-foreground`}>
+            Live Rooms ({liveBattles.length}/5)
+          </span>
+          {switchableBattles.map((live) => (
+            <button
+              key={live.id}
+              onClick={() => navigate(embedTo(`/room/${live.id}`))}
+              className={`rounded-lg border border-border bg-background font-medium text-foreground hover:border-primary/40 hover:text-primary ${isVerySmallMobile ? "max-w-[140px] px-2 py-1 text-[11px]" : "px-2.5 py-1.5 text-xs"}`}
+            >
+              <span className="block truncate">{live.title}</span>
+            </button>
+          ))}
         </div>
       </div>
 

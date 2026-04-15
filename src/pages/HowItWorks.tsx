@@ -3,6 +3,8 @@ import { Users, Mic, Trophy, Crown, Shield, Hand, MessageSquare } from "lucide-r
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import CountryChips from "@/components/CountryChips";
+import { useEmbedMode } from "@/contexts/EmbedModeContext";
+import EmbedTopBar from "@/components/EmbedTopBar";
 
 const steps = [
   { icon: Users, title: "Join a Battle Room", desc: "Browse live battles and enter a room as an audience member. It's free and instant." },
@@ -17,10 +19,13 @@ const roles = [
   { icon: MessageSquare, title: "Audience", desc: "Listeners who vote, react, and can request to speak.", color: "text-muted-foreground" },
 ];
 
-const HowItWorks = () => (
-  <div className="min-h-screen bg-background">
-    <Navbar />
-    <div className="mx-auto max-w-4xl px-4 py-16 space-y-16">
+const HowItWorks = () => {
+  const { isEmbedded } = useEmbedMode();
+
+  return (
+    <div className="min-h-screen bg-background">
+      {isEmbedded ? <EmbedTopBar title="How It Works" /> : <Navbar />}
+      <div className={`mx-auto max-w-4xl px-4 ${isEmbedded ? "py-8" : "py-16"} space-y-16`}>
       <div className="text-center">
         <h1 className="text-4xl font-display font-black text-foreground mb-4">How AfricaBattleZone Works</h1>
         <p className="text-lg text-muted-foreground">Join live music battles, vote for your favorites, and discover Africa's hottest talent.</p>
@@ -82,9 +87,10 @@ const HowItWorks = () => (
           Back to Home
         </Link>
       </div>
+      </div>
+      {!isEmbedded && <Footer />}
     </div>
-    <Footer />
-  </div>
-);
+  );
+};
 
 export default HowItWorks;
