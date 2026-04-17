@@ -7,8 +7,11 @@ import Navbar from "@/components/Navbar";
 import { useBattle } from "@/hooks/useBattles";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchSongchainUserIdSet } from "@/lib/songchain";
+import { useEmbedMode } from "@/contexts/EmbedModeContext";
+import EmbedTopBar from "@/components/EmbedTopBar";
 
 const HostControl = () => {
+  const { isEmbedded } = useEmbedMode();
   const { roomId } = useParams();
   const navigate = useNavigate();
   const { data: battle, isLoading } = useBattle(roomId);
@@ -50,7 +53,7 @@ const HostControl = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
+      {isEmbedded ? <EmbedTopBar title="Host Control" /> : <Navbar />}
       <div className="mx-auto max-w-5xl px-4 py-8">
         <Link to="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6">
           <ArrowLeft className="h-4 w-4" /> Back

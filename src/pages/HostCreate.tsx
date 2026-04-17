@@ -1,10 +1,14 @@
 import { useState, useMemo, useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import { ArrowLeft, Zap, Save, X, Search, UserPlus, ChevronDown, Music, MapPin, Calendar, FileText } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { ArrowLeft, Zap, Save, X, Search, UserPlus, ChevronDown, Music, MapPin, Calendar, FileText, Radio } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useEmbedMode } from "@/contexts/EmbedModeContext";
+import EmbedTopBar from "@/components/EmbedTopBar";
+import AppLink from "@/components/AppLink";
+import { toast } from "@/hooks/use-toast";
 
 const regions = ["Zambia", "South Africa", "Nigeria", "Zimbabwe", "Botswana"];
 
@@ -33,6 +37,7 @@ const SelectWrapper = ({ icon: Icon, children }: { icon: React.ElementType; chil
 );
 
 const HostCreate = () => {
+  const { isEmbedded, embedTo } = useEmbedMode();
   const navigate = useNavigate();
   const { user, profile } = useAuth();
   const [form, setForm] = useState({
@@ -49,6 +54,8 @@ const HostCreate = () => {
   const [selectedCoHosts, setSelectedCoHosts] = useState<SongchainUser[]>([]);
   const [showCoHostDropdown, setShowCoHostDropdown] = useState(false);
   const [users, setUsers] = useState<SongchainUser[]>([]);
+  const [liveBattlesCount, setLiveBattlesCount] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   // For now, artists come from battles already in system - in future this would be a separate artists table
   // Using mock artist data as placeholder since songchainn artist data structure isn't in the DB yet
@@ -66,6 +73,17 @@ const HostCreate = () => {
       if (data) setUsers(data as SongchainUser[]);
     };
     fetchUsers();
+  }, []);
+
+  useEffect(() => {
+    const fetchLiveCount = async () => {
+      const { count } = await supabase
+        .from("battles")
+        .select("id", { count: "exact", head: true })
+        .eq("status", "live");
+      setLiveBattlesCount(count ?? 0);
+    };
+    fetchLiveCount();
   }, []);
 
   const update = (key: string, value: string) => setForm((f) => ({ ...f, [key]: value }));
@@ -94,9 +112,75 @@ const HostCreate = () => {
     setSelectedCoHosts((prev) => prev.filter((u) => u.id !== userId));
   };
 
-  const handleSubmit = async () => {
+  const upsertHostInRoom = async (battleId: string) => {
     if (!user || !profile) return;
-    
+    await supabase
+      .from("battle_rooms")
+      .upsert(
+        {
+          battle_id: battleId,
+          user_id: user.id,
+          role: "host",
+          display_name: profile.display_name || profile.username || "Host",
+          is_active: true,
+          is_muted: false,
+          is_speaking: true,
+        },
+        { onConflict: "battle_id,user_id" },
+      );
+  };
+
+  const broadcastBattleLaunch = async (battleId: string, title: string) => {
+    if (!user) return;
+    const { data: profiles } = await supabase
+      .from("audience_profiles")
+      .select("user_id")
+      .eq("onboarding_completed", true)
+      .not("user_id", "is", null)
+      .limit(5000);
+
+    const userIds = (profiles || [])
+      .map((p) => p.user_id)
+      .filter((id): id is string => typeof id === "string" && id.length > 0);
+
+    if (userIds.length) {
+      const payload = userIds
+        .filter((id) => id !== user.id)
+        .map((targetId) => ({
+          user_id: targetId,
+          type: "battle_live",
+          title: "New Live Battle",
+          message: `${title} is live now. Join the room and vote.`,
+          metadata: { battle_id: battleId, route: `/room/${battleId}` },
+        }));
+      if (payload.length) {
+        await supabase.from("notifications").insert(payload);
+      }
+    }
+
+    await supabase.from("social_posts").insert({
+      user_id: user.id,
+      content: `Now Live on WaveWarz Africa: ${title}. Join battle room ${battleId} and vote.`,
+    });
+  };
+
+  const createBattle = async (isLaunchNow: boolean) => {
+    if (!user || !profile) return;
+    if (!form.title.trim()) {
+      toast({ title: "Battle title required", description: "Please add a title before creating a battle." });
+      return;
+    }
+    if (isLaunchNow && liveBattlesCount >= 5) {
+      toast({
+        title: "Live battle limit reached",
+        description: "BattleZone supports 5 concurrent live battles. End one first, then launch a new battle.",
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+    const status = isLaunchNow ? "live" : "upcoming";
+    const scheduledTime = isLaunchNow ? null : form.schedule || null;
     const { data, error } = await supabase.from("battles").insert({
       title: form.title,
       region: form.region,
@@ -109,14 +193,28 @@ const HostCreate = () => {
       host_user_id: user.id,
       host_name: profile.display_name || profile.username || "Host",
       co_hosts: selectedCoHosts.map(c => c.display_name || c.username || ""),
-      scheduled_time: form.schedule || null,
-      status: form.schedule ? "upcoming" : "live",
+      scheduled_time: scheduledTime,
+      status,
       total_rounds: 3,
     }).select().single();
 
-    if (!error && data) {
-      navigate(`/room/${data.id}`);
+    if (error || !data) {
+      toast({ title: "Failed to create battle", description: "Please try again." });
+      setIsSubmitting(false);
+      return;
     }
+
+    if (isLaunchNow) {
+      await upsertHostInRoom(data.id);
+      await broadcastBattleLaunch(data.id, form.title);
+      toast({ title: "Battle launched", description: "Your battle is live and users have been notified." });
+      setLiveBattlesCount((n) => n + 1);
+      navigate(embedTo(`/room/${data.id}`));
+    } else {
+      toast({ title: "Battle scheduled", description: "Your battle is now in the upcoming feed." });
+      navigate(embedTo("/battles/upcoming"));
+    }
+    setIsSubmitting(false);
   };
 
   const selectClass = "w-full rounded-xl border border-border bg-card/80 backdrop-blur pl-14 pr-4 py-3.5 text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/30 shadow-[0_2px_10px_rgba(0,0,0,0.2)] transition-all appearance-none cursor-pointer hover:border-primary/20";
@@ -124,11 +222,11 @@ const HostCreate = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
+      {isEmbedded ? <EmbedTopBar title="Host A Battle" /> : <Navbar />}
       <div className="mx-auto max-w-2xl px-4 py-8">
-        <Link to="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6">
+        <AppLink to="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6">
           <ArrowLeft className="h-4 w-4" /> Back
-        </Link>
+        </AppLink>
 
         <div className="space-y-8">
           <div className="text-center">
@@ -223,6 +321,10 @@ const HostCreate = () => {
               <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
               <input type="datetime-local" value={form.schedule} onChange={(e) => update("schedule", e.target.value)} className={inputClass} />
             </div>
+            <p className="text-xs text-muted-foreground flex items-center gap-1">
+              <Radio className="h-3.5 w-3.5" />
+              Live capacity: {liveBattlesCount}/5 active battles
+            </p>
           </div>
 
           {/* Co-Host Invites */}
@@ -303,20 +405,30 @@ const HostCreate = () => {
           </div>
 
           {/* Submit */}
-          <div className="flex gap-4">
-            <button
-              onClick={handleSubmit}
-              className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-6 py-4 font-bold text-primary-foreground text-lg hover:bg-primary/90 transition-all hover:shadow-[0_0_30px_hsl(var(--neon-green)/0.3)]"
-            >
-              <Zap className="h-5 w-5" /> {form.schedule ? "Schedule Battle" : "Go Live Now"}
-            </button>
-            <button className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-6 py-4 font-medium text-muted-foreground hover:bg-muted transition-colors">
-              <Save className="h-5 w-5" /> Save Draft
+          <div className="space-y-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
+              <button
+                onClick={() => createBattle(false)}
+                disabled={isSubmitting || !form.schedule}
+                className="w-full min-h-14 inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-secondary px-5 py-3.5 font-bold text-secondary-foreground text-base sm:text-lg hover:bg-secondary/90 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                <Calendar className="h-5 w-5 shrink-0" /> Schedule Battle
+              </button>
+              <button
+                onClick={() => createBattle(true)}
+                disabled={isSubmitting || liveBattlesCount >= 5}
+                className="w-full min-h-14 inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-primary px-5 py-3.5 font-bold text-primary-foreground text-base sm:text-lg hover:bg-primary/90 transition-all hover:shadow-[0_0_30px_hsl(var(--neon-green)/0.3)] disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                <Zap className="h-5 w-5 shrink-0" /> Launch Battle Now
+              </button>
+            </div>
+            <button className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl border border-border bg-card px-5 py-3 text-sm sm:text-base font-medium text-muted-foreground hover:bg-muted transition-colors">
+              <Save className="h-4 w-4 sm:h-5 sm:w-5" /> Save Draft
             </button>
           </div>
         </div>
       </div>
-      <Footer />
+      {!isEmbedded && <Footer />}
     </div>
   );
 };
