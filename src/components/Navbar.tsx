@@ -18,6 +18,9 @@ const Navbar = () => {
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
   const { profile, signOut } = useAuth();
+  const returnToSongchainHome = () => {
+    window.location.href = "https://www.songchainn.xyz/";
+  };
 
   return (
     <>
@@ -48,6 +51,13 @@ const Navbar = () => {
           </div>
 
           <div className="flex items-center gap-2">
+            <button
+              onClick={returnToSongchainHome}
+              className="hidden md:inline-flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2 text-sm font-semibold text-foreground hover:bg-muted/50 transition-colors"
+            >
+              <Home className="h-4 w-4" />
+              Return To Songchainn
+            </button>
             <NotificationsDropdown />
             <AppLink
               to="/host/create"
@@ -138,6 +148,16 @@ const Navbar = () => {
               <Zap className="h-4 w-4" />
               Host a Battle
             </AppLink>
+            <button
+              onClick={() => {
+                setMobileOpen(false);
+                returnToSongchainHome();
+              }}
+              className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50"
+            >
+              <Home className="h-4 w-4" />
+              Return To Songchainn
+            </button>
             <button
               onClick={() => { setMobileOpen(false); signOut(); }}
               className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50"
