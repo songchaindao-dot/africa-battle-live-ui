@@ -6,6 +6,7 @@ interface EmbedTopBarProps {
 }
 
 const EmbedTopBar = ({ title }: EmbedTopBarProps) => {
+  const songchainnLogoUrl = "/songchainn-logo.webp?v=20260418";
   const { isEmbedded, openStandalone } = useEmbedMode();
   const returnToSongchainHome = () => {
     const songchainHomeUrl = "https://www.songchainn.xyz/";
@@ -29,6 +30,7 @@ const EmbedTopBar = ({ title }: EmbedTopBarProps) => {
       <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4">
         <p className="truncate text-sm font-semibold text-foreground">{title || "WaveWarz Africa"}</p>
         <div className="flex items-center gap-2">
+          <img src={songchainnLogoUrl} alt="Songchainn" className="h-7 w-auto opacity-90" />
           <button
             onClick={returnToSongchainHome}
             className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-muted/50"

@@ -5,6 +5,7 @@ import wavewarzLogo from "@/assets/wavewarz-logo-2.png";
 import NotificationsDropdown from "@/components/NotificationsDropdown";
 import { useAuth } from "@/contexts/AuthContext";
 import AppLink from "@/components/AppLink";
+import AvatarWithFallback from "@/components/AvatarWithFallback";
 
 const navItems = [
   { label: "Home", path: "/", icon: Home },
@@ -15,6 +16,7 @@ const navItems = [
 ];
 
 const Navbar = () => {
+  const songchainnLogoUrl = "/songchainn-logo.webp?v=20260418";
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
   const { profile, signOut } = useAuth();
@@ -51,6 +53,7 @@ const Navbar = () => {
           </div>
 
           <div className="flex items-center gap-2">
+            <img src={songchainnLogoUrl} alt="Songchainn" className="h-8 w-auto opacity-90" />
             <button
               onClick={returnToSongchainHome}
               className="hidden md:inline-flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2 text-sm font-semibold text-foreground hover:bg-muted/50 transition-colors"
@@ -70,11 +73,13 @@ const Navbar = () => {
             {profile && (
               <div className="flex items-center gap-2">
                 <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center text-xs font-bold text-primary overflow-hidden">
-                  {profile.avatar_url ? (
-                    <img src={profile.avatar_url} alt="" className="h-full w-full object-cover" />
-                  ) : (
-                    (profile.display_name || profile.username || "?").charAt(0)
-                  )}
+                  <AvatarWithFallback
+                    src={profile.avatar_url}
+                    alt={profile.display_name || profile.username || "Profile"}
+                    fallbackText={profile.display_name || profile.username || "?"}
+                    imgClassName="h-full w-full object-cover"
+                    fallbackClassName="flex h-full w-full items-center justify-center text-xs font-bold text-primary"
+                  />
                 </div>
                 <span className="hidden md:inline text-sm font-medium text-foreground">
                   {profile.display_name || profile.username}
@@ -110,11 +115,13 @@ const Navbar = () => {
             {profile && (
               <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-primary/5 border border-primary/10 mb-2">
                 <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center text-sm font-bold text-primary overflow-hidden">
-                  {profile.avatar_url ? (
-                    <img src={profile.avatar_url} alt="" className="h-full w-full object-cover" />
-                  ) : (
-                    (profile.display_name || profile.username || "?").charAt(0)
-                  )}
+                  <AvatarWithFallback
+                    src={profile.avatar_url}
+                    alt={profile.display_name || profile.username || "Profile"}
+                    fallbackText={profile.display_name || profile.username || "?"}
+                    imgClassName="h-full w-full object-cover"
+                    fallbackClassName="flex h-full w-full items-center justify-center text-sm font-bold text-primary"
+                  />
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-foreground">{profile.display_name || profile.username}</p>
