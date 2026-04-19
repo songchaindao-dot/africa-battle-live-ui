@@ -2,7 +2,7 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
 
-const frameAncestors = "frame-ancestors 'self' https://www.songchainn.xyz https://songchainn.xyz";
+const frameAncestors = "frame-ancestors 'self' https://www.songchainn.xyz https://songchainn.xyz https://*.lovableproject.com https://*.lovable.app https://*.lovable.dev";
 
 // https://vitejs.dev/config/
 export default defineConfig(() => ({
