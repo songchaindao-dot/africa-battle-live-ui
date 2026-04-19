@@ -896,6 +896,54 @@ export type Database = {
       }
     }
     Views: {
+      audience_profiles_public: {
+        Row: {
+          avatar_url: string | null
+          base_profile_link: string | null
+          bio: string | null
+          cover_photo_url: string | null
+          cover_url: string | null
+          created_at: string | null
+          display_name: string | null
+          id: string | null
+          onboarding_completed: boolean | null
+          profile_name: string | null
+          updated_at: string | null
+          user_id: string | null
+          username: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          base_profile_link?: string | null
+          bio?: string | null
+          cover_photo_url?: string | null
+          cover_url?: string | null
+          created_at?: string | null
+          display_name?: string | null
+          id?: string | null
+          onboarding_completed?: boolean | null
+          profile_name?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          username?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          base_profile_link?: string | null
+          bio?: string | null
+          cover_photo_url?: string | null
+          cover_url?: string | null
+          created_at?: string | null
+          display_name?: string | null
+          id?: string | null
+          onboarding_completed?: boolean | null
+          profile_name?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          username?: string | null
+        }
+        Relationships: []
+      }
       battle_listener_counts: {
         Row: {
           battle_id: string | null
