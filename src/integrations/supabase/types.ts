@@ -80,8 +80,44 @@ export type Database = {
         }
         Relationships: []
       }
+      battle_room_messages: {
+        Row: {
+          battle_id: string
+          created_at: string
+          id: string
+          message_text: string
+          room_id: string
+          user_id: string
+        }
+        Insert: {
+          battle_id: string
+          created_at?: string
+          id?: string
+          message_text: string
+          room_id: string
+          user_id: string
+        }
+        Update: {
+          battle_id?: string
+          created_at?: string
+          id?: string
+          message_text?: string
+          room_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "battle_room_messages_battle_id_fkey"
+            columns: ["battle_id"]
+            isOneToOne: false
+            referencedRelation: "battles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       battle_rooms: {
         Row: {
+          avatar_url: string | null
           battle_id: string
           display_name: string | null
           id: string
@@ -90,10 +126,13 @@ export type Database = {
           is_speaking: boolean
           joined_at: string
           last_seen_at: string
+          mic_on: boolean | null
           role: string
+          room_id: string | null
           user_id: string
         }
         Insert: {
+          avatar_url?: string | null
           battle_id: string
           display_name?: string | null
           id?: string
@@ -102,10 +141,13 @@ export type Database = {
           is_speaking?: boolean
           joined_at?: string
           last_seen_at?: string
+          mic_on?: boolean | null
           role?: string
+          room_id?: string | null
           user_id: string
         }
         Update: {
+          avatar_url?: string | null
           battle_id?: string
           display_name?: string | null
           id?: string
@@ -114,7 +156,9 @@ export type Database = {
           is_speaking?: boolean
           joined_at?: string
           last_seen_at?: string
+          mic_on?: boolean | null
           role?: string
+          room_id?: string | null
           user_id?: string
         }
         Relationships: [
@@ -172,12 +216,19 @@ export type Database = {
           artist_b_region: string | null
           co_hosts: string[] | null
           created_at: string
+          created_by: string | null
+          ended_at: string | null
           ended_time: string | null
+          feed_post_id: string | null
           host_name: string
           host_user_id: string | null
           id: string
+          launch_mode: string
+          launched_at: string | null
           region: string
+          room_id: string | null
           round: number
+          scheduled_for: string | null
           scheduled_time: string | null
           song_a: string
           song_b: string
@@ -196,12 +247,19 @@ export type Database = {
           artist_b_region?: string | null
           co_hosts?: string[] | null
           created_at?: string
+          created_by?: string | null
+          ended_at?: string | null
           ended_time?: string | null
+          feed_post_id?: string | null
           host_name: string
           host_user_id?: string | null
           id?: string
+          launch_mode?: string
+          launched_at?: string | null
           region?: string
+          room_id?: string | null
           round?: number
+          scheduled_for?: string | null
           scheduled_time?: string | null
           song_a: string
           song_b: string
@@ -220,12 +278,19 @@ export type Database = {
           artist_b_region?: string | null
           co_hosts?: string[] | null
           created_at?: string
+          created_by?: string | null
+          ended_at?: string | null
           ended_time?: string | null
+          feed_post_id?: string | null
           host_name?: string
           host_user_id?: string | null
           id?: string
+          launch_mode?: string
+          launched_at?: string | null
           region?: string
+          room_id?: string | null
           round?: number
+          scheduled_for?: string | null
           scheduled_time?: string | null
           song_a?: string
           song_b?: string
@@ -234,6 +299,128 @@ export type Database = {
           total_rounds?: number
           updated_at?: string
           winner?: string | null
+        }
+        Relationships: []
+      }
+      direct_messages: {
+        Row: {
+          ai_reply_status: string
+          created_at: string
+          id: string
+          is_read: boolean
+          message_text: string
+          needs_ai_review: boolean
+          sender_type: string
+          sender_user_id: string | null
+          thread_id: string
+        }
+        Insert: {
+          ai_reply_status?: string
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message_text: string
+          needs_ai_review?: boolean
+          sender_type: string
+          sender_user_id?: string | null
+          thread_id: string
+        }
+        Update: {
+          ai_reply_status?: string
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message_text?: string
+          needs_ai_review?: boolean
+          sender_type?: string
+          sender_user_id?: string | null
+          thread_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "direct_messages_thread_id_fkey"
+            columns: ["thread_id"]
+            isOneToOne: false
+            referencedRelation: "dm_threads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dm_ai_jobs: {
+        Row: {
+          created_at: string
+          id: string
+          processed_at: string | null
+          status: string
+          thread_id: string
+          user_message_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          processed_at?: string | null
+          status?: string
+          thread_id: string
+          user_message_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          processed_at?: string | null
+          status?: string
+          thread_id?: string
+          user_message_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dm_ai_jobs_thread_id_fkey"
+            columns: ["thread_id"]
+            isOneToOne: false
+            referencedRelation: "dm_threads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dm_ai_jobs_user_message_id_fkey"
+            columns: ["user_message_id"]
+            isOneToOne: false
+            referencedRelation: "direct_messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dm_threads: {
+        Row: {
+          created_at: string
+          id: string
+          is_archived: boolean
+          last_message_at: string | null
+          last_message_preview: string | null
+          title: string | null
+          unread_count: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_archived?: boolean
+          last_message_at?: string | null
+          last_message_preview?: string | null
+          title?: string | null
+          unread_count?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_archived?: boolean
+          last_message_at?: string | null
+          last_message_preview?: string | null
+          title?: string | null
+          unread_count?: number
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -281,6 +468,7 @@ export type Database = {
       }
       notifications: {
         Row: {
+          body: string | null
           created_at: string
           id: string
           is_read: boolean
@@ -291,6 +479,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          body?: string | null
           created_at?: string
           id?: string
           is_read?: boolean
@@ -301,6 +490,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          body?: string | null
           created_at?: string
           id?: string
           is_read?: boolean
@@ -309,6 +499,45 @@ export type Database = {
           title?: string | null
           type?: string | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      outbound_email_queue: {
+        Row: {
+          attempts: number
+          body_text: string
+          created_at: string
+          event_type: string
+          id: string
+          payload: Json
+          sent_at: string | null
+          status: string
+          subject: string
+          to_email: string
+        }
+        Insert: {
+          attempts?: number
+          body_text: string
+          created_at?: string
+          event_type: string
+          id?: string
+          payload?: Json
+          sent_at?: string | null
+          status?: string
+          subject: string
+          to_email: string
+        }
+        Update: {
+          attempts?: number
+          body_text?: string
+          created_at?: string
+          event_type?: string
+          id?: string
+          payload?: Json
+          sent_at?: string | null
+          status?: string
+          subject?: string
+          to_email?: string
         }
         Relationships: []
       }
@@ -532,25 +761,55 @@ export type Database = {
       }
       social_posts: {
         Row: {
+          activity_type: string | null
           content: string | null
           created_at: string
           id: string
+          is_deleted: boolean
           media_url: string | null
+          metadata: Json
+          playlist_id: string | null
+          post_type: string
+          song_id: string | null
+          target_type: string | null
+          text_content: string | null
+          updated_at: string
           user_id: string
+          visibility: string
         }
         Insert: {
+          activity_type?: string | null
           content?: string | null
           created_at?: string
           id?: string
+          is_deleted?: boolean
           media_url?: string | null
+          metadata?: Json
+          playlist_id?: string | null
+          post_type?: string
+          song_id?: string | null
+          target_type?: string | null
+          text_content?: string | null
+          updated_at?: string
           user_id: string
+          visibility?: string
         }
         Update: {
+          activity_type?: string | null
           content?: string | null
           created_at?: string
           id?: string
+          is_deleted?: boolean
           media_url?: string | null
+          metadata?: Json
+          playlist_id?: string | null
+          post_type?: string
+          song_id?: string | null
+          target_type?: string | null
+          text_content?: string | null
+          updated_at?: string
           user_id?: string
+          visibility?: string
         }
         Relationships: []
       }
@@ -575,6 +834,42 @@ export type Database = {
           id?: string
           song_id?: string | null
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      suggestion_forms: {
+        Row: {
+          created_at: string
+          email_sent: boolean
+          id: string
+          improvement_text: string
+          source: string
+          status: string
+          subject: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email_sent?: boolean
+          id?: string
+          improvement_text: string
+          source?: string
+          status?: string
+          subject?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email_sent?: boolean
+          id?: string
+          improvement_text?: string
+          source?: string
+          status?: string
+          subject?: string | null
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -605,6 +900,45 @@ export type Database = {
         Row: {
           battle_id: string | null
           listener_count: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "battle_rooms_battle_id_fkey"
+            columns: ["battle_id"]
+            isOneToOne: false
+            referencedRelation: "battles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      battle_live_counts: {
+        Row: {
+          battle_id: string | null
+          listener_count: number | null
+          room_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "battle_rooms_battle_id_fkey"
+            columns: ["battle_id"]
+            isOneToOne: false
+            referencedRelation: "battles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      battle_live_users: {
+        Row: {
+          avatar_url: string | null
+          battle_id: string | null
+          display_name: string | null
+          is_active: boolean | null
+          joined_at: string | null
+          last_seen_at: string | null
+          mic_on: boolean | null
+          role: string | null
+          room_id: string | null
+          user_id: string | null
         }
         Relationships: [
           {
@@ -660,6 +994,8 @@ export type Database = {
         Row: {
           avatar_url: string | null
           display_name: string | null
+          is_active: boolean | null
+          joined_at: string | null
           last_seen_at: string | null
           room_id: string | null
           user_id: string | null
@@ -667,6 +1003,8 @@ export type Database = {
         Insert: {
           avatar_url?: string | null
           display_name?: string | null
+          is_active?: boolean | null
+          joined_at?: string | null
           last_seen_at?: string | null
           room_id?: string | null
           user_id?: string | null
@@ -674,17 +1012,59 @@ export type Database = {
         Update: {
           avatar_url?: string | null
           display_name?: string | null
+          is_active?: boolean | null
+          joined_at?: string | null
           last_seen_at?: string | null
           room_id?: string | null
           user_id?: string | null
         }
         Relationships: []
       }
+      song_like_counts: {
+        Row: {
+          likes_count: number | null
+          song_id: string | null
+        }
+        Relationships: []
+      }
+      song_pulse_counts: {
+        Row: {
+          pulses_count: number | null
+          song_id: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
+      create_songchainn_system_post: {
+        Args: { _playlist_id?: string; _song_id?: string; _text: string }
+        Returns: string
+      }
+      create_text_post: { Args: { _text: string }; Returns: string }
+      ensure_dm_thread: { Args: { _user_id: string }; Returns: string }
+      heartbeat_battle_room: {
+        Args: { _battle_id: string }
+        Returns: undefined
+      }
       heartbeat_room: { Args: { _room_id: string }; Returns: undefined }
+      join_battle_room: { Args: { _battle_id: string }; Returns: undefined }
       join_room: { Args: { _room_id: string }; Returns: undefined }
+      launch_battle_now: { Args: { _battle_id: string }; Returns: string }
+      leave_battle_room: { Args: { _battle_id: string }; Returns: undefined }
       leave_room: { Args: { _room_id: string }; Returns: undefined }
+      mark_dm_thread_read: { Args: { _thread_id: string }; Returns: undefined }
+      send_mosha_message: {
+        Args: { _message_text: string; _user_id: string }
+        Returns: string
+      }
+      switch_battle_room: {
+        Args: { _new_battle_id: string }
+        Returns: undefined
+      }
+      sync_battle_listener_count: {
+        Args: { _battle_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
